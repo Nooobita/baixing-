@@ -3,6 +3,8 @@ import '../services/service_method.dart';
 import 'dart:convert';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 
 
@@ -34,13 +36,21 @@ class _HomePageState extends State<HomePage> {
             List <Map> swiperDataList = List<Map>.from(data['slides']);
             List <Map> navigatorList = List<Map>.from(data['category']);
             String advertesPicture = data['advertesPicture']['PICTURE_ADDRESS'];
+            String leaderImage = data['shopInfo']['leaderImage'];
+            String leaderPhone = data['shopInfo']['leaderPhone'];
+            List <Map> recommdList = List<Map>.from(data['recommend']);
+
             
-            return Column(
+            return SingleChildScrollView(
+              child: Column(
               children: <Widget>[
                 SwiperDiy(swiperDataList: swiperDataList,),
                 TopNavigator(navigatorList: navigatorList,),
                 AdBanner(advertesPicture: advertesPicture,),
+                LeaderPhone(leaderImage: leaderImage, leaderPhone: leaderPhone,),
+                Recommd(recommdList: recommdList,)
               ],
+            ),
             );
           }
           else {
@@ -126,6 +136,111 @@ class AdBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       child: Image.network(this.advertesPicture)
+    );
+  }
+}
+
+
+// 店长电话
+class LeaderPhone extends StatelessWidget {
+  final String leaderImage;
+  final String leaderPhone;
+
+  LeaderPhone({Key key, this.leaderImage, this.leaderPhone}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: InkWell(
+        onTap: _lanuchURL,
+        child: Image.network(this.leaderImage),
+      ),
+    );
+  }
+  
+  void _lanuchURL() async {
+    String url = 'tel:${this.leaderPhone}';
+    if (await canLaunch(url)){
+      await launch(url);
+    } else {
+      throw "cloud not launch $url";
+    }
+  }
+}
+
+// 商品推荐
+class Recommd extends StatelessWidget{
+  final List recommdList;
+
+  Recommd({Key key, this.recommdList}): super(key:key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: ScreenUtil().setHeight(380),
+      margin: EdgeInsets.only(top: 10.0),
+      child: Column(
+        children: <Widget>[
+          _titleWidget(),
+          _recommedList()
+        ],
+      ),
+    );
+  }
+  
+  // 推荐商品标题
+  Widget _titleWidget(){
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.fromLTRB(10.0, 2.0, 0, 5.0) ,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(width: 5.0, color: Colors.black12)
+        )
+      ),
+      child: Text("商品推荐", style: TextStyle(color: Colors.pink),),
+    );
+  }
+  
+  Widget _recommedList(){
+    return Container(
+      height: ScreenUtil().setHeight(330),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: this.recommdList.length,
+        itemBuilder: (BuildContext context, index) => _item(index),
+      ),
+    );
+    
+  }
+
+  Widget _item(index){
+
+    return InkWell(
+      onTap: (){},
+      child: Container(
+        height: ScreenUtil().setHeight(330),
+        width: ScreenUtil().setWidth(250),
+        padding: EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(width: 1.0, color: Colors.black12)
+          )
+        ),
+        child: Column(
+          children: <Widget>[
+            Image.network(this.recommdList[index]['image']),
+            Text('¥${recommdList[index]['mallPrice']}'),
+            Text('¥${recommdList[index]['price']}',
+              style: TextStyle(
+                decoration: TextDecoration.lineThrough,
+                color: Colors.grey
+                ),)
+          ],
+        ),
+      ),
     );
   }
 }
