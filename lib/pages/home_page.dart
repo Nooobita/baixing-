@@ -4,8 +4,7 @@ import 'dart:convert';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-
+import 'package:flutter_easyrefresh/easy_refresh.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -20,18 +19,25 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
   @override
   bool get wantKeepAlive => true;
 
+  int page = 1;
+  List<Map> hotGoodsList = [];
+
   @override
   Widget build(BuildContext context) {
+
+    GlobalKey<RefreshFooterState> _footerKey = new GlobalKey<RefreshFooterState>();
+
+
     return Scaffold(
       appBar: AppBar(
         title: Text("百姓生活+"),
       ),
       body: FutureBuilder(
-        future: getHomePageContent(),
+        future: request('homePageContext', {'lon': '115.02932', 'lat': '35.76189'}),
         builder: (context, snapshot) {
           if(snapshot.hasData){
             var data = json.decode(snapshot.data.toString())['data'];
-
+            
             List <Map> swiperDataList = List<Map>.from(data['slides']);
             List <Map> navigatorList = List<Map>.from(data['category']);
             String advertesPicture = data['advertesPicture']['PICTURE_ADDRESS'];
@@ -46,22 +52,46 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
             List <Map> floor3 = List<Map>.from(data['floor3']);
 
             
-            return SingleChildScrollView(
-              child: Column(
-              children: <Widget>[
+            return EasyRefresh(
+              child: ListView(
+                children: <Widget>[
                 SwiperDiy(swiperDataList: swiperDataList,),
                 TopNavigator(navigatorList: navigatorList,),
                 AdBanner(advertesPicture: advertesPicture,),
                 LeaderPhone(leaderImage: leaderImage, leaderPhone: leaderPhone,),
                 Recommd(recommdList: recommdList,),
-                FloorTitle(picture_address: floor1Title,),
+                FloorTitle(pictureAddress: floor1Title,),
                 FloorContent(floorGoodsList: floor1,),
-                FloorTitle(picture_address: floor2Title,),
+                FloorTitle(pictureAddress: floor2Title,),
                 FloorContent(floorGoodsList: floor2,),
-                FloorTitle(picture_address: floor3Title,),
+                FloorTitle(pictureAddress: floor3Title,),
                 FloorContent(floorGoodsList: floor3,),
+                _hotGoods(),
 
               ],
+            ),
+            loadMore: () async {
+              print("开始加载更多");
+              var formData = {"page": page};
+              await request("homePageBelowContent", formData).then((val){
+                var data = json.decode(val.toString());
+                List<Map> newGoodsList = List<Map>.from(data['data']);
+                setState(() {
+                  hotGoodsList.addAll(newGoodsList);
+                  page++;
+                });
+              });
+
+            },
+            refreshFooter: ClassicsFooter(
+              key: _footerKey,
+              bgColor: Colors.white,
+              textColor: Colors.pink,
+              moreInfoColor: Colors.pink,
+              showMore: true,
+              noMoreText: '',
+              moreInfo: '加载中',
+              loadedText: '上拉刷新',
             ),
             );
           }
@@ -74,6 +104,75 @@ class _HomePageState extends State<HomePage> with AutomaticKeepAliveClientMixin{
       )
     );
   }
+ // 火爆专区标题
+  Widget hotTitle = Container(
+    margin: EdgeInsets.only(top: 10.0),
+    padding: EdgeInsets.all(5.0),
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        bottom: BorderSide(width: 1.0, color: Colors.black12)
+      )
+    ),
+    child: Text('火爆专区'),
+  );
+  
+  // 火爆专区子项
+  Widget _wrapList(){
+    if (hotGoodsList.length != 0){
+      List<Widget> listWidget = hotGoodsList.map((val){
+        return InkWell(
+          onTap: (){print("点了一下");},
+          child: Container(
+            width: ScreenUtil().setWidth(372),
+            color: Colors.white,
+            padding: EdgeInsets.all(5.0),
+            margin: EdgeInsets.only(bottom: 3.0),
+            child: Column(
+              children: <Widget>[
+                Image.network(val['image'], width: ScreenUtil().setWidth(375),),
+                Text(
+                  val['name'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.pink, fontSize: ScreenUtil().setSp(26)),
+                ),
+                Row(
+                  children: <Widget>[
+                    Text("¥${val['mallPrice']}"),
+                    Text(
+                      "¥${val['price']}",
+                      style: TextStyle(color: Colors.black26, decoration: TextDecoration.lineThrough),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      }).toList();
+  
+      return Wrap(
+        spacing: 2,
+        children: listWidget,
+      );
+    } else {
+      return Text(" ");
+    }
+  }
+
+  // 火爆专区
+  Widget _hotGoods(){
+    return Container(
+      child: Column(
+        children: <Widget>[
+          hotTitle,
+          _wrapList()
+        ],
+      ),
+    );
+    }
 }
 
 // 首页轮播图编写
@@ -172,12 +271,12 @@ class LeaderPhone extends StatelessWidget {
   
   void _lanuchURL() async {
     String url = 'tel:${this.leaderPhone}';
-    // print(await canLaunch("tel:+8618814182468"));
-    // if ( await canLaunch(url)){
-    //   launch(url);
-    // } else {
-    //   throw "cloud not launch $url";
-    // }
+    print(await canLaunch("tel:+8618814182468"));
+    if ( await canLaunch(url)){
+      launch(url);
+    } else {
+      throw "cloud not launch $url";
+    }
   }
 }
 
@@ -263,15 +362,15 @@ class Recommd extends StatelessWidget{
 
 // 楼层商品组件
 class FloorTitle extends StatelessWidget{
-  final String picture_address;
+  final String pictureAddress;
 
-  FloorTitle({Key key, this.picture_address}) : super(key: key);
+  FloorTitle({Key key, this.pictureAddress}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(8.0),
-      child: Image.network(this.picture_address),
+      child: Image.network(this.pictureAddress),
     );
   }
 
@@ -327,3 +426,5 @@ class FloorContent extends StatelessWidget {
     );
   }
 }
+
+
