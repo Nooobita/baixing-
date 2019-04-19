@@ -1,0 +1,11 @@
+.DS_Store
+.vscode/*
+*.pyc
+spark-warehouse/*
+metastore_db/*
+*.log
+data/*
+.idea
+build/*
+.python-version
+__pycache__/*
