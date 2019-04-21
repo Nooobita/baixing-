@@ -5,7 +5,7 @@ import '../conf/service_url.dart';
 
 Future request(String url, [Map formData]) async {
   try {
-    print("开始获取首页接口");
+    print("开始获取接口---$url---数据");
     Response response;
     Dio dio = Dio();
     // 设置请求头
