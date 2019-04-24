@@ -5,10 +5,17 @@ class ChildCategory with ChangeNotifier{
 
   List<BxMallSubDto> childCategoryList = [];
   int childIndex = 0;
+  int page = 1;
+  String noMoreText = '';
   String mallSubId = '00';
+  String categoryId = '4';
   
   // 修改大类
-  getChildCategory(List<BxMallSubDto> list){
+  getChildCategory(List<BxMallSubDto> list, String id){
+    categoryId = id;
+    childIndex = 0;
+    page=1;
+    noMoreText = '';
     BxMallSubDto all = BxMallSubDto();
     all.mallSubId = '00';
     all.mallCategoryId = '00';
@@ -22,6 +29,8 @@ class ChildCategory with ChangeNotifier{
   // 修改小类
   changeChildIndex(index){
     childIndex = index;
+    page = 1;
+    noMoreText = '';
     notifyListeners();
   }
   
@@ -30,4 +39,13 @@ class ChildCategory with ChangeNotifier{
     mallSubId = mallSubId;
   }
 
+  // 增加页数
+  addPage(){
+    page ++;
+  }
+  
+  // 修改增加标题
+  changeNoMore(String text){
+    noMoreText = text;
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_easyrefresh/easy_refresh.dart';
 import '../services/service_method.dart';
 import '../provide/child_category.dart';
 import '../provide/category_goods_list.dart';
@@ -84,7 +85,7 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
 
         var childList = list[index].bxMallSubDto;
         var categoryId = list[index].mallCategoryId;
-        Provide.value<ChildCategory>(context).getChildCategory(childList);
+        Provide.value<ChildCategory>(context).getChildCategory(childList, categoryId);
         _getGoodsList(categoryId: categoryId);
       },
       child: Container(
@@ -108,7 +109,7 @@ class _LeftCategoryNavState extends State<LeftCategoryNav> {
       setState((){
         list = category.data;
       });
-      Provide.value<ChildCategory>(context).getChildCategory(list[0].bxMallSubDto);      
+      Provide.value<ChildCategory>(context).getChildCategory(list[0].bxMallSubDto, list[0].mallCategoryId);      
     });
   }
 
@@ -198,9 +199,13 @@ class _RightCategoryNavState extends State<RightCategoryNav> {
       var data = json.decode(val.toString());
       
       CategoryGoodsListModel goodsList = CategoryGoodsListModel.fromJson(data);
-      Provide.value<CategoryGoodsListProvide>(context).setGoodsList(goodsList.data);
+      if (goodsList.data == null){
+        Provide.value<CategoryGoodsListProvide>(context).setGoodsList([]);
+      }
+      else{
+        Provide.value<CategoryGoodsListProvide>(context).setGoodsList(goodsList.data);
+      }
       //打印一下
-      print(Provide.value<CategoryGoodsListProvide>(context).goodsList);
     });
   }
 }
@@ -212,22 +217,70 @@ class CategoryGoodsList extends StatefulWidget {
 
 class _CategoryGoodsListState extends State<CategoryGoodsList> {
 
+  GlobalKey<RefreshFooterState> _footerKey = new GlobalKey<RefreshFooterState>();
+
+  void _getMoreList(){
+    
+    Provide.value<ChildCategory>(context).addPage();
+    var data = {
+      'categoryId': Provide.value<ChildCategory>(context).categoryId,
+      'categorySubId': Provide.value<ChildCategory>(context).mallSubId,
+      'page': Provide.value<ChildCategory>(context).page
+    };
+    
+    request('getMallGoods', data).then((val){
+      var data = json.decode(val.toString());
+      
+      CategoryGoodsListModel goodsList = CategoryGoodsListModel.fromJson(data);
+      if (goodsList.data == null){
+        Provide.value<ChildCategory>(context).changeNoMore("没有更多了");
+      }else{
+        Provide.value<CategoryGoodsListProvide>(context).setGoodsList(goodsList.data);
+      }
+    });
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     return Provide<CategoryGoodsListProvide>(
       builder: (context, child, data){
-
-        print(data);
-        return Expanded(
+        if (data.goodsList.length > 0){
+          return Expanded(
           child: Container(
           width: ScreenUtil().setWidth(570),
-          child: ListView.builder(
-            itemCount: (data == null)? 0 : data.goodsList.length,
+          
+          child: EasyRefresh(
+            refreshFooter: ClassicsFooter(
+              key: _footerKey,
+              bgColor: Colors.white,
+              textColor: Colors.pink,
+              moreInfoColor: Colors.pink,
+              showMore: true,
+              noMoreText: Provide.value<ChildCategory>(context).noMoreText,
+              moreInfo: '加载中',
+              loadedText: '上拉加载',
+            ),
+            child:  ListView.builder(
+            itemCount: data.goodsList.length,
             itemBuilder: (context, index){
               return _listWidget(data.goodsList,index);
-            },)
+            },),
+            loadMore: () async{
+              print("没有更多了");
+            },
+          ),
           ),
         );
+      }else{
+        return Container(
+          child: Align(
+          alignment: Alignment.center,
+          heightFactor: 30.0,
+          child: Text('暂时没有数据'),          
+        ),
+        );
+      }
     });
   }
 
