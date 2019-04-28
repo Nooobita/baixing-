@@ -5,6 +5,8 @@ import './provide/category_goods_list.dart';
 import './provide/child_category.dart';
 import 'pages/index_page.dart';
 import 'package:fluro/fluro.dart';
+import './routers/routers.dart';
+import './routers/application.dart';
 
 void main(){
   var childCategory = ChildCategory();
@@ -25,13 +27,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    
     final router = Router();
+    Routers.configureRouters(router);
+    Application.router = router;
 
     return Container(
       child: MaterialApp(
         title: "百姓生活+",
         debugShowCheckedModeBanner: false,
+        onGenerateRoute: Application.router.generator,
         theme: ThemeData(
           primaryColor: Colors.pink
         ),
