@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provide/provide.dart';
 import '../provide/detail_info.dart';
+import '../pages/detail_top.dart';
 
 class DetailPage extends StatelessWidget {
 
@@ -26,7 +27,9 @@ class DetailPage extends StatelessWidget {
           if(snapshot.hasData){
             return Container(
               child: Column(
-                children: <Widget>[],
+                children: <Widget>[
+                  DetailTop(),
+                ],
               ),
             );
           }
