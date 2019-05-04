@@ -11,11 +11,11 @@ class DetailInfoProvide with ChangeNotifier{
   // 从后台获取数据
   getGoodsInfo(String goodsId) async{
     var formData = {"goodsId": goodsId};
-    
+    print(111);
     await request('getGoodDetailById', formData).then((val){
       var responseData = json.decode(val.toString());
+      print(responseData);
       goodsInfo = DetailModel.fromJson(responseData);
-
       notifyListeners();
 
     });

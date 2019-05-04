@@ -5,7 +5,7 @@ import '../pages/detail_top.dart';
 import '../pages/detail_explain.dart';
 import '../pages/detail_tabbar.dart';
 import '../pages/detail_web.dart';
-import '../pages/detail_bottom.dart'
+import '../pages/detail_bottom.dart';
 
 class DetailPage extends StatelessWidget {
 
@@ -19,7 +19,7 @@ class DetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back), 
           onPressed: (){
             Navigator.pop(context);
           },
